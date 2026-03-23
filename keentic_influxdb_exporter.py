@@ -126,6 +126,6 @@ if __name__ == '__main__':
                     metrics = collector.collect()
                     infuxdb_writer.write_metrics(metrics)
             except Exception as e:
-                logging.error(f"Collector failed. Reason: {e}")
+                logging.exception(f"Collector failed")
 
             time.sleep(wait_interval)
