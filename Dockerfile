@@ -1,11 +1,19 @@
-FROM python:3.8-alpine AS dependencies
-COPY requirements.txt .
+FROM ghcr.io/astral-sh/uv:0.8.22 AS uv
 
-RUN pip install --no-cache-dir --user --no-warn-script-location -r requirements.txt
+FROM python:3.8-alpine AS dependencies
+COPY --from=uv /uv /uvx /bin/
+
+WORKDIR /home
+ENV UV_LINK_MODE=copy
+
+COPY pyproject.toml uv.lock /home/
+RUN uv sync --locked --no-dev --no-install-project
 
 FROM python:3.8-alpine AS build-image
-COPY --from=dependencies /root/.local /root/.local
+WORKDIR /home
+ENV PATH="/home/.venv/bin:$PATH"
 
+COPY --from=dependencies /home/.venv /home/.venv
 COPY value_normalizer.py keentic_influxdb_exporter.py influxdb_writter.py keenetic_api.py /home/
 COPY config/metrics.json /home/config/metrics.json
 

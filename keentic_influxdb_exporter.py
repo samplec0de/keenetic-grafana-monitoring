@@ -13,6 +13,15 @@ from value_normalizer import normalize_value
 
 logging.basicConfig(level='INFO', format='%(asctime)s - %(filename)s - %(levelname)s - %(message)s')
 
+BANNER = r"""
+  _  __                    _   _         _____      _ _           _
+ | |/ /                   | | (_)       / ____|    | | |         | |
+ | ' / ___  ___ _ __   ___| |_ _  ___  | |     ___ | | | ___  ___| |_ ___  _ __🇺🇦  🇺🇦  🇺🇦
+ |  < / _ \/ _ \ '_ \ / _ \ __| |/ __| | |    / _ \| | |/ _ \/ __| __/ _ \| '__|
+ | . \  __/  __/ | | |  __/ |_| | (__  | |___| (_) | | |  __/ (__| || (_) | |
+ |_|\_\___|\___|_| |_|\___|\__|_|\___|  \_____\___/|_|_|\___|\___|\__\___/|_|
+"""
+
 
 def json_path_init(paths: Dict[str, str]):
     queries = {}
@@ -96,7 +105,7 @@ class KeeneticCollector(object):
 
 
 if __name__ == '__main__':
-    logging.info("\n\n" + "  _  __                    _   _         _____      _ _           _             \n | |/ /                   | | (_)       / ____|    | | |         | |            \n | ' / ___  ___ _ __   ___| |_ _  ___  | |     ___ | | | ___  ___| |_ ___  _ __🇺🇦  🇺🇦  🇺🇦 \n |  < / _ \/ _ \ '_ \ / _ \ __| |/ __| | |    / _ \| | |/ _ \/ __| __/ _ \| '__|\n | . \  __/  __/ | | |  __/ |_| | (__  | |___| (_) | | |  __/ (__| || (_) | |   \n |_|\_\___|\___|_| |_|\___|\__|_|\___|  \_____\___/|_|_|\___|\___|\__\___/|_|   \n\n")
+    logging.info("\n\n%s\n", BANNER)
     pwd = os.path.dirname(os.path.realpath(__file__))
     metrics_configuration = json.load(open(pwd + "/config/metrics.json", "r"))
 

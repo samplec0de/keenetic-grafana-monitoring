@@ -68,7 +68,13 @@ skip_auth=true
 
 # Run
 
-There are two options, you can run the collector directly on the router or in Docker on a separate host.
+There are three options: run the collector locally with `uv`, run it in Docker on a separate host, or copy it to the router directly.
+
+## Run locally with uv
+
+* Install `uv`
+* Create and update the project environment `uv sync`
+* Start the collector `uv run python keentic_influxdb_exporter.py`
 
 ## Run in Docker on a separate host (recommended)
 
@@ -132,8 +138,9 @@ Do not specify username/password
 ## Run on router
 
 * Copy repository content to your router `/opt/home/keenetic-grafana-monitoring`
-* Install Python `opkg install python3 python3-pip`
-* Install dependencies ` pip install -r requirements.txt`
+* Install Python `opkg install python3`
+* Preferred: install dependencies with `uv sync --frozen`
+* Fallback if `uv` is unavailable on the router: install `python3-pip` and run `pip install -r requirements.txt`
 * Create script for autorun `/opt/etc/init.d/S99keeneticgrafana`
 
 ```$bash
@@ -141,7 +148,10 @@ Do not specify username/password
 
 [ "$1" != "start" ] && exit 0
 
-nohup python /opt/home/keenetic-grafana-monitoring/keentic_influxdb_exporter.py >/dev/null 2>&1 &
+PYTHON_BIN=/opt/home/keenetic-grafana-monitoring/.venv/bin/python
+[ -x "$PYTHON_BIN" ] || PYTHON_BIN=python
+
+nohup "$PYTHON_BIN" /opt/home/keenetic-grafana-monitoring/keentic_influxdb_exporter.py >/dev/null 2>&1 &
 ```
 
 * Run `/opt/etc/init.d/S99keeneticgrafana start`
@@ -149,6 +159,8 @@ nohup python /opt/home/keenetic-grafana-monitoring/keentic_influxdb_exporter.py 
 # Build Docker image
 
 `docker build -t keenetic-grafana-monitoring .`
+
+The Docker build now installs dependencies from `pyproject.toml` and `uv.lock`.
 
 # InfluxDB 2.x / keenetic-grafana-monitoring 2.x migration manual
 

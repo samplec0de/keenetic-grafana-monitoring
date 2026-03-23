@@ -1,0 +1,15 @@
+[project]
+name = "keenetic-grafana-monitoring"
+version = "2.0.3"
+description = "Collect metrics from Keenetic routers and write them to InfluxDB for Grafana dashboards."
+readme = "README.md"
+requires-python = ">=3.8"
+license = { file = "LICENSE.md" }
+dependencies = [
+    "influxdb-client==1.23.0",
+    "jsonpath-rw==1.4.0",
+    "requests>=2.32.4,<3",
+]
+
+[tool.uv]
+package = false
