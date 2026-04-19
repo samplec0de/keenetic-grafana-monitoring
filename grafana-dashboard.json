@@ -285,7 +285,7 @@
           "measurement": "system",
           "orderByTime": "ASC",
           "policy": "default",
-          "query": "SELECT last(\"uptime\") FROM \"system\" LIMIT 1",
+          "query": "SELECT last(\"uptime\") FROM \"system\" WHERE \"router\" =~ /^$router$/ LIMIT 1",
           "rawQuery": true,
           "refId": "A",
           "resultFormat": "time_series",
@@ -303,7 +303,13 @@
               }
             ]
           ],
-          "tags": []
+          "tags": [
+            {
+              "key": "router",
+              "operator": "=~",
+              "value": "/^$router$/"
+            }
+          ]
         }
       ],
       "title": "Uptime",
