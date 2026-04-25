@@ -44,10 +44,34 @@ class KeeneticCollector(object):
         self._root = parse(metric_configuration['root'])
         self._tags = json_path_init(metric_configuration['tags'])
         self._values = json_path_init(metric_configuration['values'])
+        # When `wan_interface` is set to `true`, resolve the upstream
+        # interface name from `internet status` each cycle and use it as the
+        # `name` parameter, while emitting the metric tagged `name=ISP`.
+        # Lets the same dashboard work across routers whose actual WAN is on
+        # different underlying interfaces (Vlan-tagged Ethernet, WireGuard,
+        # PPPoE, etc.) without the hardcoded ISP alias being bound on the
+        # router side.
+        self._wan_interface = bool(metric_configuration.get('wan_interface'))
 
     def collect(self) -> List[dict]:
+        params = self._params
+        if self._wan_interface:
+            try:
+                status = self._keenetic_client.metric("internet status", {})
+            except KeeneticApiException as e:
+                logging.warning(f"Skipping wan_interface metric '{self._command}'. Reason: "
+                                f"internet status failed, status: {e.status_code}, "
+                                f"response: {e.response_text}")
+                return []
+            wan_iface = (status.get("gateway") or {}).get("interface")
+            if not wan_iface:
+                logging.warning(f"Skipping wan_interface metric '{self._command}'. Reason: "
+                                "gateway.interface missing from internet status response.")
+                return []
+            params = {**self._params, "name": wan_iface}
+
         try:
-            response = self._keenetic_client.metric(self._command, self._params)
+            response = self._keenetic_client.metric(self._command, params)
         except KeeneticApiException as e:
             logging.warning(f"Skipping metric '{self._command}' collection. Reason keenetic api exception, "
                             f"status: {e.status_code}, response: {e.response_text}")
@@ -58,7 +82,11 @@ class KeeneticCollector(object):
         start_time = time.time_ns()
 
         for root in roots:
-            tags = self._params.copy()
+            tags = params.copy()
+            if self._wan_interface:
+                # Override the dynamic interface name so dashboards keep
+                # reading a stable `name="ISP"` series.
+                tags["name"] = "ISP"
             values = {}
 
             for tagName, tagPath in self._tags.items():
