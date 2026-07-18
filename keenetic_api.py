@@ -5,6 +5,13 @@ from urllib import parse
 
 from requests import Session
 
+# (connect, read) timeout for all Keenetic API calls. Without it a stalled router
+# connection hangs the collector indefinitely (process alive, zero data) — the failure
+# that silently froze all 3 collectors after the UDR7 migration blip (2026-07-18).
+# On timeout the request raises requests.exceptions.Timeout, which propagates and lets
+# systemd Restart=on-failure recover the collector instead of leaving it wedged.
+REQUEST_TIMEOUT = (5, 15)
+
 
 class KeeneticClient:
 
@@ -26,13 +33,13 @@ class KeeneticClient:
         if self._skip_auth:
             return True
         auth_endpoint = f"{self._admin_endpoint}/auth"
-        check_auth_response = self._session.get(auth_endpoint)
+        check_auth_response = self._session.get(auth_endpoint, timeout=REQUEST_TIMEOUT)
         if check_auth_response.status_code == 401:
             ndm_challenge = check_auth_response.headers.get('X-NDM-Challenge')
             ndm_realm = check_auth_response.headers.get('X-NDM-Realm')
             md5 = hashlib.md5((self._login + ':' + ndm_realm + ':' + self._password).encode('utf-8')).hexdigest()
             sha = sha256((ndm_challenge + md5).encode('utf-8')).hexdigest()
-            auth_response = self._session.post(auth_endpoint, json={'login': self._login, 'password': sha})
+            auth_response = self._session.post(auth_endpoint, json={'login': self._login, 'password': sha}, timeout=REQUEST_TIMEOUT)
             if auth_response.status_code == 200:
                 return True
             else:
@@ -45,7 +52,7 @@ class KeeneticClient:
         if self._auth():
             url = f"{self._admin_endpoint}/rci/show/{command.replace(' ', '/')}" + "?" + parse.urlencode(
                 params)
-            r = self._session.get(url)
+            r = self._session.get(url, timeout=REQUEST_TIMEOUT)
             if r.status_code == 200:
                 return r.json()
             raise KeeneticApiException(r.status_code, r.text)
